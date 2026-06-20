@@ -119,3 +119,47 @@ function shuffleHeroIcons() {
 
 shuffleHeroIcons();
 setInterval(shuffleHeroIcons, 3200);
+// ===== LOADER =====
+window.addEventListener('load', () => {
+    const loader = document.getElementById('page-loader');
+
+    if (!loader) return;
+
+    loader.classList.add('hide');
+
+    setTimeout(() => {
+        loader.style.display = 'none';
+    }, 500);
+});
+const hero = document.querySelector('#inicio');
+const glow = document.querySelector('.cursor-glow');
+
+if (hero && glow) {
+  hero.addEventListener('mousemove', (e) => {
+    const rect = hero.getBoundingClientRect();
+
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    glow.style.left = x + 'px';
+    glow.style.top = y + 'px';
+  });
+}
+document.querySelectorAll('.tech-float').forEach(icon => {
+
+  icon.addEventListener('mousemove', e => {
+
+    const rect = icon.getBoundingClientRect();
+
+    const x = (e.clientX - rect.left - rect.width/2) * 0.2;
+    const y = (e.clientY - rect.top - rect.height/2) * 0.2;
+
+    icon.style.transform =
+      `translate(${x}px, ${y}px) scale(1.1)`;
+  });
+
+  icon.addEventListener('mouseleave', () => {
+    icon.style.transform = '';
+  });
+
+});
