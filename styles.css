@@ -257,13 +257,11 @@ nav a:hover { color: var(--cyan); background: rgba(0,180,216,0.08); }
   margin-bottom: 2.5rem;
 }
 
-/* Orbit system */
+/* Orbit system — solo la foto centrada */
 .orbit-system {
-  position: relative;
   width: min(980px, 96vw);
   margin: 0 auto 2.5rem;
-  display: flex; flex-direction: column; align-items: center;
-  gap: 1.5rem;
+  display: flex; align-items: center; justify-content: center;
 }
 .photo-container {
   position: relative;
@@ -273,14 +271,26 @@ nav a:hover { color: var(--cyan); background: rgba(0,180,216,0.08); }
   overflow: visible; z-index: 5;
 }
 .photo-container img { display: block; width: 100%; height: auto; object-fit: contain; }
-.orbit-layer {
-  position: relative; inset: auto; overflow: visible;
-  display: flex; flex-wrap: wrap; justify-content: center;
-  gap: 0.9rem; width: 100%;
+
+/* Capa de iconos flotando sobre todo el hero */
+.orbit-layer { position: absolute; inset: 0; pointer-events: none; }
+.orbit-item {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 56px; height: 56px;
+  pointer-events: auto;
+  animation: zero-g var(--duration, 7s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
 }
-.orbit-item { position: static; width: auto; height: auto; transform: none !important; }
+@keyframes zero-g {
+  0%   { transform: translate(calc(-50% + var(--x, 0px) + var(--mx, 0px)), calc(-50% + var(--y, 0px) + var(--my, 0px))) translate(0px, 0px) rotate(0deg); }
+  25%  { transform: translate(calc(-50% + var(--x, 0px) + var(--mx, 0px)), calc(-50% + var(--y, 0px) + var(--my, 0px))) translate(12px, -6px) rotate(2deg); }
+  50%  { transform: translate(calc(-50% + var(--x, 0px) + var(--mx, 0px)), calc(-50% + var(--y, 0px) + var(--my, 0px))) translate(-6px, -16px) rotate(-1deg); }
+  75%  { transform: translate(calc(-50% + var(--x, 0px) + var(--mx, 0px)), calc(-50% + var(--y, 0px) + var(--my, 0px))) translate(-14px, -2px) rotate(1.5deg); }
+  100% { transform: translate(calc(-50% + var(--x, 0px) + var(--mx, 0px)), calc(-50% + var(--y, 0px) + var(--my, 0px))) translate(0px, 0px) rotate(0deg); }
+}
+
 .orbit-item .tech-icon {
-  position: static;
   width: 48px; height: 48px;
   background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
   border: 1px solid rgba(0,180,216,0.24);
@@ -326,17 +336,8 @@ nav a:hover { color: var(--cyan); background: rgba(0,180,216,0.08); }
 }
 .btn-outline:hover { border-color: var(--cyan); color: var(--cyan); transform: translateY(-3px); }
 @media (max-width: 768px) {
-  .orbit-layer {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    justify-items: center;
-  }
-
-  .orbit-item .tech-icon {
-    width: 46px;
-    height: 46px;
-  }
+  .orbit-item .tech-icon { width: 40px; height: 40px; }
+  .orbit-item { width: 48px; height: 48px; }
 }
 /* ======================================
    SECTIONS COMMON
@@ -740,7 +741,6 @@ body[data-theme='dark'] .social-link.github i {
   nav a:not(.nav-cta) { display: none; }
   .orbit-system { width: min(100%, 96vw); }
   .photo-container { width: min(340px, 84vw); }
-  .orbit-item .tech-icon { width: 42px; height: 42px; }
   .theme-toggle { width: 34px; height: 34px; }
   footer { padding: 2rem 1rem 1.25rem; }
   .footer-inner { gap: 0.9rem; }

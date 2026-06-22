@@ -66,35 +66,77 @@ document.addEventListener('mousemove', e => {
   if(bg) bg.style.transform = `translate(${x*0.3}px, ${y*0.3}px)`;
 });
 
-// Pause float animation on hover for icons
-document.querySelectorAll('.orbit-item').forEach(item => {
-  const icon = item.querySelector('.tech-icon');
-  if (!icon) return;
-  item.addEventListener('mouseenter', () => {
-    icon.style.animationPlayState = 'paused';
-    item.style.animationPlayState = 'paused';
-  });
-  item.addEventListener('mouseleave', () => {
-    icon.style.animationPlayState = 'running';
-    item.style.animationPlayState = 'running';
-  });
-});
+// Repulsión magnética — mouse y touch
+(() => {
+  const hero = document.querySelector('#inicio');
+  const items = document.querySelectorAll('#inicio .orbit-item');
+  if (!hero || !items.length) return;
 
-// Random floating for hero icons
-const orbitItems = Array.from(document.querySelectorAll('.orbit-system .orbit-item'));
+  let rafId;
+
+  function repel(mx, my) {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      items.forEach(item => {
+        const r = item.getBoundingClientRect();
+        const ix = r.left + r.width / 2;
+        const iy = r.top + r.height / 2;
+
+        const dx = ix - mx;
+        const dy = iy - my;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const radius = 220;
+        const maxPush = 40;
+
+        if (dist < radius && dist > 0) {
+          const force = 1 - dist / radius;
+          item.style.setProperty('--mx', `${(dx / dist * force * maxPush).toFixed(1)}px`);
+          item.style.setProperty('--my', `${(dy / dist * force * maxPush).toFixed(1)}px`);
+        } else {
+          item.style.setProperty('--mx', '0px');
+          item.style.setProperty('--my', '0px');
+        }
+      });
+    });
+  }
+
+  function resetRepel() {
+    if (rafId) cancelAnimationFrame(rafId);
+    items.forEach(item => {
+      item.style.setProperty('--mx', '0px');
+      item.style.setProperty('--my', '0px');
+    });
+  }
+
+  hero.addEventListener('mousemove', e => repel(e.clientX, e.clientY));
+  hero.addEventListener('mouseleave', resetRepel);
+
+  hero.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    if (t) repel(t.clientX, t.clientY);
+  }, { passive: true });
+  hero.addEventListener('touchend', resetRepel);
+  hero.addEventListener('touchcancel', resetRepel);
+})();
+
+// Posición inicial fija (no cambia) en toda la sección hero
+const orbitItems = Array.from(document.querySelectorAll('#inicio .orbit-item'));
+const hero = document.querySelector('#inicio');
 
 function randomRange(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-function setRandomPosition(item, delay = 0) {
-  const orbitSystem = document.querySelector('.orbit-system');
-  if (!orbitSystem) return;
+function setFloatingPosition(item) {
+  if (!hero) return;
 
-  const size = Math.min(orbitSystem.clientWidth, orbitSystem.clientHeight);
-  const photoRadius = size * 0.23;
-  const maxX = orbitSystem.clientWidth * 0.46;
-  const maxY = orbitSystem.clientHeight * 0.38;
+  const w = hero.clientWidth;
+  const h = hero.clientHeight;
+  const photoW = Math.min(380, w * 0.78);
+  const photoH = photoW;
+  const maxX = w * 0.46;
+  const maxY = h * 0.44;
 
   let x = 0;
   let y = 0;
@@ -104,21 +146,15 @@ function setRandomPosition(item, delay = 0) {
     x = randomRange(-maxX, maxX);
     y = randomRange(-maxY, maxY);
     attempts += 1;
-  } while ((Math.abs(x) < photoRadius && Math.abs(y) < photoRadius) && attempts < 12);
+  } while (Math.abs(x) < photoW * 0.4 && Math.abs(y) < photoH * 0.4 && attempts < 25);
 
   item.style.setProperty('--x', `${x.toFixed(1)}px`);
   item.style.setProperty('--y', `${y.toFixed(1)}px`);
-  item.style.transitionDelay = `${delay}s`;
+  item.style.setProperty('--delay', `${randomRange(0, 4).toFixed(2)}s`);
+  item.style.setProperty('--duration', `${randomRange(6, 10).toFixed(1)}s`);
 }
 
-function shuffleHeroIcons() {
-  orbitItems.forEach((item, index) => {
-    setRandomPosition(item, index * 0.08);
-  });
-}
-
-shuffleHeroIcons();
-setInterval(shuffleHeroIcons, 3200);
+orbitItems.forEach(item => setFloatingPosition(item));
 // ===== LOADER =====
 window.addEventListener('load', () => {
     const loader = document.getElementById('page-loader');
@@ -131,7 +167,6 @@ window.addEventListener('load', () => {
         loader.style.display = 'none';
     }, 500);
 });
-const hero = document.querySelector('#inicio');
 const glow = document.querySelector('.cursor-glow');
 
 if (hero && glow) {
@@ -145,21 +180,3 @@ if (hero && glow) {
     glow.style.top = y + 'px';
   });
 }
-document.querySelectorAll('.tech-float').forEach(icon => {
-
-  icon.addEventListener('mousemove', e => {
-
-    const rect = icon.getBoundingClientRect();
-
-    const x = (e.clientX - rect.left - rect.width/2) * 0.2;
-    const y = (e.clientY - rect.top - rect.height/2) * 0.2;
-
-    icon.style.transform =
-      `translate(${x}px, ${y}px) scale(1.1)`;
-  });
-
-  icon.addEventListener('mouseleave', () => {
-    icon.style.transform = '';
-  });
-
-});
