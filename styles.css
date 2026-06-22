@@ -279,15 +279,7 @@ nav a:hover { color: var(--cyan); background: rgba(0,180,216,0.08); }
   left: 50%; top: 50%;
   width: 56px; height: 56px;
   pointer-events: auto;
-  animation: zero-g var(--duration, 7s) ease-in-out infinite;
-  animation-delay: var(--delay, 0s);
-}
-@keyframes zero-g {
-  0%   { transform: translate(calc(-50% + var(--x, 0px) + var(--mx, 0px)), calc(-50% + var(--y, 0px) + var(--my, 0px))) translate(0px, 0px) rotate(0deg); }
-  25%  { transform: translate(calc(-50% + var(--x, 0px) + var(--mx, 0px)), calc(-50% + var(--y, 0px) + var(--my, 0px))) translate(12px, -6px) rotate(2deg); }
-  50%  { transform: translate(calc(-50% + var(--x, 0px) + var(--mx, 0px)), calc(-50% + var(--y, 0px) + var(--my, 0px))) translate(-6px, -16px) rotate(-1deg); }
-  75%  { transform: translate(calc(-50% + var(--x, 0px) + var(--mx, 0px)), calc(-50% + var(--y, 0px) + var(--my, 0px))) translate(-14px, -2px) rotate(1.5deg); }
-  100% { transform: translate(calc(-50% + var(--x, 0px) + var(--mx, 0px)), calc(-50% + var(--y, 0px) + var(--my, 0px))) translate(0px, 0px) rotate(0deg); }
+  transform: translate(calc(-50% + var(--x, 0px)), calc(-50% + var(--y, 0px)));
 }
 
 .orbit-item .tech-icon {

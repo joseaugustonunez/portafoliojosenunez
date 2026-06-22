@@ -66,60 +66,6 @@ document.addEventListener('mousemove', e => {
   if(bg) bg.style.transform = `translate(${x*0.3}px, ${y*0.3}px)`;
 });
 
-// Repulsión magnética — mouse y touch
-(() => {
-  const hero = document.querySelector('#inicio');
-  const items = document.querySelectorAll('#inicio .orbit-item');
-  if (!hero || !items.length) return;
-
-  let rafId;
-
-  function repel(mx, my) {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(() => {
-      rafId = null;
-      items.forEach(item => {
-        const r = item.getBoundingClientRect();
-        const ix = r.left + r.width / 2;
-        const iy = r.top + r.height / 2;
-
-        const dx = ix - mx;
-        const dy = iy - my;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const radius = 220;
-        const maxPush = 40;
-
-        if (dist < radius && dist > 0) {
-          const force = 1 - dist / radius;
-          item.style.setProperty('--mx', `${(dx / dist * force * maxPush).toFixed(1)}px`);
-          item.style.setProperty('--my', `${(dy / dist * force * maxPush).toFixed(1)}px`);
-        } else {
-          item.style.setProperty('--mx', '0px');
-          item.style.setProperty('--my', '0px');
-        }
-      });
-    });
-  }
-
-  function resetRepel() {
-    if (rafId) cancelAnimationFrame(rafId);
-    items.forEach(item => {
-      item.style.setProperty('--mx', '0px');
-      item.style.setProperty('--my', '0px');
-    });
-  }
-
-  hero.addEventListener('mousemove', e => repel(e.clientX, e.clientY));
-  hero.addEventListener('mouseleave', resetRepel);
-
-  hero.addEventListener('touchmove', e => {
-    const t = e.touches[0];
-    if (t) repel(t.clientX, t.clientY);
-  }, { passive: true });
-  hero.addEventListener('touchend', resetRepel);
-  hero.addEventListener('touchcancel', resetRepel);
-})();
-
 // Posición inicial fija (no cambia) en toda la sección hero
 const orbitItems = Array.from(document.querySelectorAll('#inicio .orbit-item'));
 const hero = document.querySelector('#inicio');
@@ -150,11 +96,136 @@ function setFloatingPosition(item) {
 
   item.style.setProperty('--x', `${x.toFixed(1)}px`);
   item.style.setProperty('--y', `${y.toFixed(1)}px`);
-  item.style.setProperty('--delay', `${randomRange(0, 4).toFixed(2)}s`);
-  item.style.setProperty('--duration', `${randomRange(6, 10).toFixed(1)}s`);
 }
 
 orbitItems.forEach(item => setFloatingPosition(item));
+
+// Física de iconos flotando en gravedad cero (como sólidos en el espacio)
+(() => {
+  const hero = document.querySelector('#inicio');
+  const items = document.querySelectorAll('#inicio .orbit-item');
+  if (!hero || !items.length) return;
+
+  const DAMPING = 0.985;
+  const MOUSE_FORCE = 0.5;
+  const MOUSE_RADIUS = 200;
+  const MAX_SPEED = 3;
+  const IDLE_DRIFT = 0.015;
+  const COLLISION_RADIUS = 26;
+
+  const state = [];
+  items.forEach(item => {
+    const x = parseFloat(item.style.getPropertyValue('--x')) || 0;
+    const y = parseFloat(item.style.getPropertyValue('--y')) || 0;
+    state.push({
+      item, x, y,
+      vx: (Math.random() - 0.5) * IDLE_DRIFT,
+      vy: (Math.random() - 0.5) * IDLE_DRIFT,
+    });
+  });
+
+  let mouseX = -9999, mouseY = -9999, mouseInside = false;
+
+  function tick() {
+    const w = hero.clientWidth;
+    const h = hero.clientHeight;
+    const maxX = w * 0.46;
+    const maxY = h * 0.44;
+
+    state.forEach(s => {
+      if (mouseInside) {
+        const r = s.item.getBoundingClientRect();
+        const ix = r.left + r.width / 2;
+        const iy = r.top + r.height / 2;
+        const dx = ix - mouseX;
+        const dy = iy - mouseY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < MOUSE_RADIUS && dist > 0) {
+          const force = (1 - dist / MOUSE_RADIUS) * MOUSE_FORCE;
+          s.vx += (dx / dist) * force;
+          s.vy += (dy / dist) * force;
+        }
+      }
+
+      s.vx += (Math.random() - 0.5) * IDLE_DRIFT;
+      s.vy += (Math.random() - 0.5) * IDLE_DRIFT;
+
+      const speed = Math.sqrt(s.vx * s.vx + s.vy * s.vy);
+      if (speed > MAX_SPEED) {
+        s.vx = (s.vx / speed) * MAX_SPEED;
+        s.vy = (s.vy / speed) * MAX_SPEED;
+      }
+
+      s.x += s.vx;
+      s.y += s.vy;
+
+      s.vx *= DAMPING;
+      s.vy *= DAMPING;
+
+      if (s.x > maxX) { s.x = maxX; s.vx *= -0.5; }
+      if (s.x < -maxX) { s.x = -maxX; s.vx *= -0.5; }
+      if (s.y > maxY) { s.y = maxY; s.vy *= -0.5; }
+      if (s.y < -maxY) { s.y = -maxY; s.vy *= -0.5; }
+    });
+
+    // Colisiones entre iconos
+    for (let i = 0; i < state.length; i++) {
+      for (let j = i + 1; j < state.length; j++) {
+        const a = state[i], b = state[j];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = COLLISION_RADIUS * 2;
+
+        if (dist < minDist && dist > 0) {
+          const overlap = (minDist - dist) / 2;
+          const nx = dx / dist;
+          const ny = dy / dist;
+
+          a.x -= nx * overlap;
+          a.y -= ny * overlap;
+          b.x += nx * overlap;
+          b.y += ny * overlap;
+
+          const dvx = a.vx - b.vx;
+          const dvy = a.vy - b.vy;
+          const dvn = dvx * nx + dvy * ny;
+
+          if (dvn > 0) {
+            a.vx -= dvn * nx;
+            a.vy -= dvn * ny;
+            b.vx += dvn * nx;
+            b.vy += dvn * ny;
+          }
+        }
+      }
+    }
+
+    state.forEach(s => {
+      s.item.style.setProperty('--x', `${s.x.toFixed(1)}px`);
+      s.item.style.setProperty('--y', `${s.y.toFixed(1)}px`);
+    });
+
+    requestAnimationFrame(tick);
+  }
+
+  hero.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    mouseInside = true;
+  });
+  hero.addEventListener('mouseleave', () => { mouseInside = false; });
+
+  hero.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    if (t) { mouseX = t.clientX; mouseY = t.clientY; mouseInside = true; }
+  }, { passive: true });
+  hero.addEventListener('touchend', () => { mouseInside = false; });
+  hero.addEventListener('touchcancel', () => { mouseInside = false; });
+
+  tick();
+})();
 // ===== LOADER =====
 window.addEventListener('load', () => {
     const loader = document.getElementById('page-loader');
