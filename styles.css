@@ -397,6 +397,7 @@ section { padding: 6rem 2rem; position: relative; }
   grid-template-rows: auto auto;
   gap: 1rem;
   margin-top: 2rem;
+  align-items: start;
 }
 .bento-card {
   background: var(--bg-card);
@@ -423,16 +424,6 @@ section { padding: 6rem 2rem; position: relative; }
 }
 .bento-card:hover::before { opacity: 1; }
 
-/* Frontend ocupa columna 1, filas 1 y 2 */
-.bento-featured {
-  grid-column: 1;
-  grid-row: 1 / 3;
-}
-/* Herramientas en columna 2, fila 2 */
-.bento-tools {
-  grid-column: 2;
-  grid-row: 2;
-}
 
 .bento-label {
   font-family: 'Rajdhani', sans-serif;
